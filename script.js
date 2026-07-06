@@ -280,10 +280,10 @@ const SLIDES = [
 ];
 
 const WATER_STUDY_SOURCES = [
-  { name: "Google Gemini", values: ["0,26"], link: "https://arxiv.org/abs/2508.15734" },
-  { name: "UC Riverside Studie", values: ["10–50 ml für 20–50 Prompts"], link: "https://arxiv.org/abs/2304.03271" },
-  { name: "ChatGPT", note: "Nicht veröffentlicht", link: "https://medium.com/readers-club/chatgpt-water-usage-1a1167244a5a" },
-  { name: "IEA", note: "Kein eindeutiger Wert", link: "https://www.iea.org/reports/energy-and-ai" },
+  { name: "Google Gemini", values: ["0,26"] },
+  { name: "UC Riverside Studie", values: ["10–50 ml für 20–50 Prompts"] },
+  { name: "ChatGPT", note: "Nicht veröffentlicht" },
+  { name: "IEA", note: "Kein eindeutiger Wert" },
 ];
 
 function studyValueBounds(v) {
@@ -328,7 +328,6 @@ function ripplePosition(rFrac, angleDeg) {
 const WATER_STUDIES = WATER_STUDY_SOURCES.map((source, i) => ({
   name: source.name,
   display: source.values ? source.values.map(formatValueWithUnit).join(" · ") : source.note,
-  link: source.link,
   ...ripplePosition(RIPPLE_RADIUS_FRACTIONS[i], RING_ANGLES[i]),
   r: STUDY_DOT_R,
   blur: 0,
@@ -499,7 +498,10 @@ const CONDITIONS_VARIANCE_CHUNKS = [
 ];
 const conditionsChunkEls = CONDITIONS_VARIANCE_CHUNKS.map((chunk, i) => {
   if (i === 2) {
-    conditionsVarianceTextEl.appendChild(document.createElement("br"));
+    conditionsVarianceTextEl.append(" ");
+    const br = document.createElement("br");
+    br.className = "desktop-only-break";
+    conditionsVarianceTextEl.appendChild(br);
   } else if (i > 0) {
     conditionsVarianceTextEl.append(" ");
   }
@@ -566,6 +568,15 @@ const FINAL_SEGMENT = TEXT_SEGMENTS.find((seg) => seg.lines && seg.lines[0] === 
 if (FINAL_SEGMENT) FINAL_SEGMENT.el.classList.add("slide-text--final");
 let finalFadeArmed = false;
 
+const KI_WASSER_SEGMENT = TEXT_SEGMENTS.find((seg) => seg.lines && seg.lines[0] === "Künstliche Intelligenz verbraucht");
+if (KI_WASSER_SEGMENT) {
+  const firstBreak = KI_WASSER_SEGMENT.el.querySelector("br");
+  if (firstBreak) {
+    firstBreak.before(" ");
+    firstBreak.classList.add("desktop-only-break");
+  }
+}
+
 const CONTRADICTIONS_SEGMENT = TEXT_SEGMENTS.find(
   (seg) => seg.lines && seg.lines[0] === "Die Antwort besteht aus Widersprüchen,"
 );
@@ -580,7 +591,11 @@ const contradictionWordSpans = CONTRADICTIONS_WORDS.map((word, i) => {
   span.textContent = word;
   gsap.set(span, { opacity: 0, color: TEXT_DIM_COLOR });
   CONTRADICTIONS_SEGMENT.el.appendChild(span);
-  if (word === CONTRADICTIONS_LINE_BREAK_AFTER) CONTRADICTIONS_SEGMENT.el.appendChild(document.createElement("br"));
+  if (word === CONTRADICTIONS_LINE_BREAK_AFTER) {
+    const desktopBreak = document.createElement("br");
+    desktopBreak.className = "desktop-only-break";
+    CONTRADICTIONS_SEGMENT.el.appendChild(desktopBreak);
+  }
   return span;
 });
 
@@ -596,22 +611,11 @@ const studyRevealEl = document.getElementById("studyReveal");
 const studyEls = WATER_STUDIES.map((study, i) => {
   const circle = document.createElement("div");
   circle.className = "study-circle";
-  circle.addEventListener("click", () => {
-    if (study.link) {
-      window.open(study.link, "_blank", "noopener");
-    } else {
-      onGateClick();
-    }
-  });
+  circle.addEventListener("click", onGateClick);
 
   const labelEl = document.createElement("p");
   labelEl.className = "study-name";
   labelEl.append(`Quelle ${i + 1}: ${study.name}`, document.createElement("br"), study.display);
-  if (study.link) {
-    labelEl.append(document.createElement("br"), "Studie ansehen ↗");
-    labelEl.classList.add("study-name--linked");
-    labelEl.addEventListener("click", () => window.open(study.link, "_blank", "noopener"));
-  }
   studyRevealEl.append(circle, labelEl);
   const labelHalfW = labelEl.offsetWidth / 2;
 

@@ -87,9 +87,7 @@
 .header__next {
   display: block;
   text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
 }
 
 html, body {
@@ -219,16 +217,12 @@ body {
   pointer-events: auto;
 }
 
-.study-name--linked {
-  pointer-events: auto;
-}
-
 .progress-bar {
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
-  width: 10px;
+  width: 6px;
   z-index: 20;
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -390,4 +384,25 @@ body {
 @keyframes scroll-arrow-bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(2px); }
+}
+
+.header__next-break {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .header__back,
+  .header__next,
+  .scroll-hint,
+  .impressum p {
+    font-size: 0.8rem;
+  }
+
+  .header__next-break {
+    display: block;
+  }
+
+  .desktop-only-break {
+    display: none;
+  }
 }
