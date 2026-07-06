@@ -1,11 +1,17 @@
 gsap.registerPlugin(ScrollTrigger);
+ScrollTrigger.config({ ignoreMobileResize: true });
 
 window.scrollTo(0, 0);
 
+const SUPPORTS_HOVER = window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+const COARSE_POINTER = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+
+function edgePad() {
+  return Math.min(48, Math.max(20, window.innerWidth * 0.06));
+}
+
 const NONE_CIRCLE = { cx: 0.5, cy: 0.5, r: 0, blur: 0, fill: "#000000", opacity: 1 };
 
-// Wächst langsam während des Intros, wird aber nie grösser als bei
-// "Wie viel Wasser verbraucht" (dort ist r ebenfalls 0.05) — kein Sprung.
 const INTRO_GROWN_R = 0.05;
 
 const KI_QUESTION_TOKENS = [
@@ -41,9 +47,6 @@ const SLIDES = [
     text: { lines: [""] },
   },
   {
-    // Kurze leere Pause, nachdem "Ungewissheit" ausgefadet ist, bevor der
-    // Punkt erscheint (siehe Kreis-Intro-Override im Ticker) — Rhythmus:
-    // erst leer, dann Kreis, dann erst Text.
     bg: "#f0f0ee",
     circle: { ...NONE_CIRCLE },
     circle2: { ...NONE_CIRCLE },
@@ -82,9 +85,6 @@ const SLIDES = [
     text: { lines: ["Um eine Überhitzung zu", "vermeiden, wird Wasser zur", "Klimatisierung eingesetzt."] },
   },
   {
-    // Verlängert "Um eine Überhitzung..." statt einer separaten leeren Pause —
-    // gibt dem Satz mehr Lesezeit und verkürzt zugleich den Leerraum davor,
-    // bevor die Frage "Wie viel Wasser..." kommt (war vorher unnötig lang).
     bg: "#f0f0ee",
     circle: { cx: 0.5, cy: 0.5, r: 0.05, blur: 0, fill: "#000000", opacity: 1 },
     circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 0, fill: "#000000", opacity: 1 },
@@ -114,11 +114,6 @@ const SLIDES = [
     circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 0, fill: "#000000", opacity: 1 },
     text: { lines: ["Wie viel Wasser verbraucht", "eine KI-Anfrage?"], tokens: KI_QUESTION_TOKENS },
   },
-  // Reservierter, leerer Scroll-Raum für die Quellen-Klick-Strecke: die
-  // Ripple-Interaktion, "...unterscheiden sich je nach Quelle." und der Start
-  // der Bedingungen-Frage laufen alle hier drüber (siehe GATE_INDEX/VARIANCE_*/
-  // CONDITIONS_TRIGGER_INDEX weiter unten) — Kreis bleibt bewusst unverändert
-  // bei r: 0.05 stehen.
   {
     bg: "#f0f0ee",
     circle: { cx: 0.5, cy: 0.5, r: 0.05, blur: 0, fill: "#000000", opacity: 1 },
@@ -143,10 +138,7 @@ const SLIDES = [
     circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 0, fill: "#000000", opacity: 1 },
     text: { lines: [""] },
   },
-  // Zusätzlicher Puffer für die Bedingungen-Strecke: nach dem letzten Klick
-  // ("...und Auslastung.") läuft der Rest (Fade-out, "Wer stellt diese Daten
-  // zur Verfügung?") rein über echtes Scrollen (siehe CONDITIONS_VARIANCE_END/
-  // DATA_QUESTION_*), braucht deshalb mehr Raum als die alten 4 Slides.
+
   {
     bg: "#f0f0ee",
     circle: { cx: 0.5, cy: 0.5, r: 0.05, blur: 0, fill: "#000000", opacity: 1 },
@@ -214,44 +206,42 @@ const SLIDES = [
     text: { lines: ["Wie viel Wasser verbraucht", "eine KI-Anfrage?"] },
   },
   {
-    // "Widersprüche": der Punkt selbst bleibt unsichtbar (r:0) — nur die
-    // Ripple-Ringe zeigen die Wellen-Kaskade (siehe CONTRADICTIONS_SEGMENT unten).
+
+    bg: "#000000",
+    circle: { cx: 0.5, cy: 0.5, r: 0, blur: 42, fill: "#f0f0ee", opacity: 1 },
+    circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 42, fill: "#f0f0ee", opacity: 1 },
+    text: { lines: ["Wie viel Wasser verbraucht", "eine KI-Anfrage?"] },
+  },
+  {
+
     bg: "#000000",
     circle: { cx: 0.5, cy: 0.5, r: 0, blur: 14, fill: "#f0f0ee", opacity: 0.9 },
     circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 14, fill: "#f0f0ee", opacity: 1 },
     text: { lines: ["Die Antwort besteht aus Widersprüchen,", "Unsicherheiten und Lücken."] },
   },
   {
-    // "Unsicherheiten": Punkt bleibt unsichtbar.
+
     bg: "#000000",
     circle: { cx: 0.5, cy: 0.5, r: 0, blur: 40, fill: "#f0f0ee", opacity: 1 },
     circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 40, fill: "#f0f0ee", opacity: 1 },
     text: { lines: ["Die Antwort besteht aus Widersprüchen,", "Unsicherheiten und Lücken."] },
   },
   {
-    // "Lücken": derselbe Dunkel-Effekt wie beim vorherigen "Wie viel Wasser..."-Slide.
+
     bg: "#000000",
     circle: { cx: 0.5, cy: 0.5, r: 0, blur: 42, fill: "#f0f0ee", opacity: 1 },
     circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 42, fill: "#f0f0ee", opacity: 1 },
     text: { lines: ["Die Antwort besteht aus Widersprüchen,", "Unsicherheiten und Lücken."] },
   },
   {
-    // Nach "Lücken." bleibt es schwarz: der Punkt kehrt nicht zurück.
+
     bg: "#000000",
     circle: { cx: 0.5, cy: 0.5, r: 0, blur: 26, fill: "#f0f0ee", opacity: 1 },
     circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 26, fill: "#f0f0ee", opacity: 1 },
     text: { lines: ["Die Antwort besteht aus Widersprüchen,", "Unsicherheiten und Lücken."] },
   },
   {
-    // Verlängert die ruhige Pause nach "Lücken." — mehr Zeit, bevor der Satz
-    // wieder wegblendet.
-    bg: "#000000",
-    circle: { cx: 0.5, cy: 0.5, r: 0, blur: 26, fill: "#f0f0ee", opacity: 1 },
-    circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 26, fill: "#f0f0ee", opacity: 1 },
-    text: { lines: ["Die Antwort besteht aus Widersprüchen,", "Unsicherheiten und Lücken."] },
-  },
-  {
-    // Leer-Slide für den vollen Fade-Abstand vor "Was bleibt ist" (siehe oben).
+
     bg: "#000000",
     circle: { cx: 0.5, cy: 0.5, r: 0, blur: 26, fill: "#f0f0ee", opacity: 1 },
     circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 26, fill: "#f0f0ee", opacity: 1 },
@@ -270,20 +260,6 @@ const SLIDES = [
     text: { lines: ["Was bleibt ist"] },
   },
   {
-    // Dritte Slide: "Was bleibt ist" bekommt etwas mehr Lesezeit.
-    bg: "#000000",
-    circle: { cx: 0.5, cy: 0.5, r: 0, blur: 24, fill: "#f0f0ee", opacity: 1 },
-    circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 24, fill: "#f0f0ee", opacity: 1 },
-    text: { lines: ["Was bleibt ist"] },
-  },
-  {
-    // Leer-Slide für den vollen Fade-Abstand vor "Ungewissheit" (siehe oben).
-    bg: "#000000",
-    circle: { cx: 0.5, cy: 0.5, r: 0, blur: 22, fill: "#f0f0ee", opacity: 1 },
-    circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 22, fill: "#f0f0ee", opacity: 1 },
-    text: { lines: [""] },
-  },
-  {
     bg: "#000000",
     circle: { cx: 0.5, cy: 0.5, r: 0, blur: 22, fill: "#f0f0ee", opacity: 1 },
     circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 22, fill: "#f0f0ee", opacity: 1 },
@@ -296,14 +272,6 @@ const SLIDES = [
     text: { lines: ["Ungewissheit"] },
   },
   {
-    bg: "#000000",
-    circle: { cx: 0.5, cy: 0.5, r: 0, blur: 22, fill: "#f0f0ee", opacity: 1 },
-    circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 22, fill: "#f0f0ee", opacity: 1 },
-    text: { lines: ["Ungewissheit"] },
-  },
-  {
-    // Vierte Slide: die Schlusszeile bleibt noch etwas länger stehen, bevor
-    // der Scroll-Bereich endet.
     bg: "#000000",
     circle: { cx: 0.5, cy: 0.5, r: 0, blur: 22, fill: "#f0f0ee", opacity: 1 },
     circle2: { cx: 0.5, cy: 0.5, r: 0, blur: 22, fill: "#f0f0ee", opacity: 1 },
@@ -311,11 +279,6 @@ const SLIDES = [
   },
 ];
 
-// Jeder Klick löst genau einen Ripple aus dem zentralen Kreis aus und zeigt
-// genau einen gemessenen Wert. Quellen, die zwei Werte veröffentlichen (UC
-// Riverside, CometAPI), erscheinen als zwei eigenständige Ripples statt
-// doppelt am selben Ring — Reihenfolge = aufsteigend nach Wert (kleinster
-// zuerst), das bestimmt zugleich Reveal-Reihenfolge und Ring-Position.
 const WATER_STUDY_SOURCES = [
   { name: "Google Gemini", values: ["0,26"], link: "https://arxiv.org/abs/2508.15734" },
   { name: "UC Riverside Studie", values: ["10–50 ml für 20–50 Prompts"], link: "https://arxiv.org/abs/2304.03271" },
@@ -323,10 +286,6 @@ const WATER_STUDY_SOURCES = [
   { name: "IEA", note: "Kein eindeutiger Wert", link: "https://www.iea.org/reports/energy-and-ai" },
 ];
 
-// Manche Quellen veröffentlichen einen Bereich statt eines Einzelwerts, z.B.
-// "10–50,0" (Halbgeviertstrich als Bereichstrenner, Komma als Dezimaltrenner).
-// studyValueBounds liefert die beiden Grenz-Substrings unverändert (fürs Vergleichen),
-// alle Werte sind roh in ml hinterlegt — formatValueWithUnit rechnet ab 1000 ml in l um.
 function studyValueBounds(v) {
   const parts = v.split("–").map((p) => p.trim());
   return parts.length === 2 ? parts : [parts[0], parts[0]];
@@ -336,9 +295,6 @@ function formatNumber(n) {
   return s.replace(".", ",");
 }
 function formatValueWithUnit(v) {
-  // Werte mit Buchstaben (z.B. "10–50 ml für 20–50 Prompts") sind bereits
-  // fertig formatierter Text mit Zusatzkontext, kein roher ml-Wert zum
-  // Umrechnen — studyValueBounds würde am zweiten Bereich (Prompts) scheitern.
   if (/[a-zA-ZäöüÄÖÜß]/.test(v)) return v;
   const isRange = v.includes("–");
   const nums = studyValueBounds(v).map((p) => parseFloat(p.replace(",", ".")));
@@ -348,25 +304,23 @@ function formatValueWithUnit(v) {
 
 }
 
-// Jede Quelle bekommt einen eigenen, gleich abgestuften Ring — ein
-// "Quellen-Ring" nach Reihenfolge im Array, nicht nach Betrag skaliert (sonst
-// würde z.B. GPT-4s 59'000 ml alle anderen Ringe an den Mittelpunkt drängen).
-const RIPPLE_R_MIN = 0.11;
-const RIPPLE_R_MAX = 0.34;
+const RIPPLE_R_MIN = 0.13;
+const RIPPLE_R_MAX = 0.37;
 
 const RIPPLE_RADIUS_FRACTIONS = WATER_STUDY_SOURCES.map((_, i, arr) =>
   lerp(RIPPLE_R_MIN, RIPPLE_R_MAX, arr.length > 1 ? i / (arr.length - 1) : 0)
 );
 
-// Gleichmässig über den Kreis verteilt, unabhängig davon wie viele Quellen es sind.
 const RING_ANGLES = WATER_STUDY_SOURCES.map((_, i) => (360 / WATER_STUDY_SOURCES.length) * i);
-const STUDY_DOT_R = 0.014;
+const STUDY_DOT_R = COARSE_POINTER ? 0.024 : 0.014;
+
+const CIRCLE_CX = 0.5;
 
 function ripplePosition(rFrac, angleDeg) {
   const rad = (angleDeg * Math.PI) / 180;
   const rPx = rFrac * Math.min(window.innerWidth, window.innerHeight);
   return {
-    cx: 0.5 + (rPx * Math.sin(rad)) / window.innerWidth,
+    cx: CIRCLE_CX + (rPx * Math.sin(rad)) / window.innerWidth,
     cy: 0.5 - (rPx * Math.cos(rad)) / window.innerHeight,
   };
 }
@@ -386,13 +340,15 @@ const WATER_STUDIES = WATER_STUDY_SOURCES.map((source, i) => ({
 const N = SLIDES.length;
 const SEGMENT_VH = 90;
 const NEGATIVE_SHRINK = 0.05;
-const TEXT_FADE_RANGE = 0.6;
+const TEXT_FADE_RANGE = 1.0;
 const EXIT_BLUR_PX = 14;
+
+const TEXT_RISE_PX = 28;
+
+const TEXT_DIM_COLOR = "#e2e4eb";
 const SCROLL_HINT_HIDE_P = 0.04;
 const TITLE_FADE_RANGE = 0.6;
-// Header verschwindet zuerst vollständig, erst danach beginnt der Titel
-// selbst auszublenden (Endpunkt bleibt TITLE_FADE_RANGE, damit der Rest der
-// Intro-Choreografie z.B. CIRCLE_INTRO_START unverändert bleibt).
+
 const HEADER_FADE_RANGE = 0.12;
 
 function hexToRgb(hex) {
@@ -443,7 +399,9 @@ function buildSceneTexts(container, segments) {
     const el = document.createElement("p");
     el.className = "slide-text";
     if (seg.tokens) {
+      el.classList.add("slide-text--plain-color");
       seg.wordEls = { keep: [], fade: [] };
+      seg.colorWordEls = [];
       let afterWord = false;
       seg.tokens.forEach((tok) => {
         if (tok.br) {
@@ -458,12 +416,28 @@ function buildSceneTexts(container, segments) {
         span.textContent = tok.text;
         el.appendChild(span);
         (tok.keep ? seg.wordEls.keep : seg.wordEls.fade).push(span);
+        seg.colorWordEls.push(span);
         afterWord = true;
       });
-    } else {
+    } else if (seg.lines[0] === "Ungewissheit") {
+
       seg.lines.forEach((line, li) => {
         if (li > 0) el.appendChild(document.createElement("br"));
         el.appendChild(document.createTextNode(line));
+      });
+    } else {
+
+      el.classList.add("slide-text--plain-color");
+      seg.colorWordEls = [];
+      seg.lines.forEach((line, li) => {
+        if (li > 0) el.appendChild(document.createElement("br"));
+        line.split(" ").forEach((word, wi) => {
+          if (wi > 0) el.appendChild(document.createTextNode(" "));
+          const span = document.createElement("span");
+          span.textContent = word;
+          el.appendChild(span);
+          seg.colorWordEls.push(span);
+        });
       });
     }
     container.appendChild(el);
@@ -474,10 +448,25 @@ function buildSceneTexts(container, segments) {
 const TEXT_SEGMENTS = buildTextSegments(SLIDES);
 buildSceneTexts(document.getElementById("sceneTexts"), TEXT_SEGMENTS);
 
-// Texte überlagern sich nie: der Fade-Radius pro Seite ist auf die Hälfte der
-// Lücke zum nächsten nicht-leeren Nachbarn begrenzt (leere Slides sind reiner
-// Puffer, zählen nicht als "Text") — zwei Texte treffen sich so exakt in der
-// Mitte bei Opacity 0, statt zu überlappen. Angewendet im Ticker weiter unten.
+function wrapWordsForColorSweep(el) {
+  const lines = el.innerHTML.split(/<br\s*\/?>/i);
+  el.textContent = "";
+  el.classList.add("slide-text--plain-color");
+  const words = [];
+  lines.forEach((line, li) => {
+    if (li > 0) el.appendChild(document.createElement("br"));
+    line.trim().split(" ").forEach((word, wi) => {
+      if (!word) return;
+      if (wi > 0) el.appendChild(document.createTextNode(" "));
+      const span = document.createElement("span");
+      span.textContent = word;
+      el.appendChild(span);
+      words.push(span);
+    });
+  });
+  return words;
+}
+
 const NON_EMPTY_TEXT_SEGMENTS = TEXT_SEGMENTS.filter((seg) => seg.key !== "");
 NON_EMPTY_TEXT_SEGMENTS.forEach((seg, idx) => {
   const prev = NON_EMPTY_TEXT_SEGMENTS[idx - 1];
@@ -497,11 +486,11 @@ const clickHintEl = document.getElementById("clickHint");
 const sourceRevealTextEl = document.getElementById("sourceRevealText");
 const rippleLegendEl = document.getElementById("rippleLegend");
 const varianceTextEl = document.getElementById("varianceText");
+const varianceWordEls = wrapWordsForColorSweep(varianceTextEl);
 const conditionsTitleTextEl = document.getElementById("conditionsTitleText");
+const conditionsTitleWordEls = wrapWordsForColorSweep(conditionsTitleTextEl);
 const conditionsVarianceTextEl = document.getElementById("conditionsVarianceText");
 
-// Jeder Klick auf den Kreis bringt einen weiteren Satzteil und blurt dabei
-// den Kreis selbst zunehmend stärker — nicht den Text.
 const CONDITIONS_VARIANCE_CHUNKS = [
   { text: "Der Verbrauch schwankt", blur: 5, growth: 1.18, ringBlur: 4, ringOpacity: 0.75 },
   { text: "je nach Standort,", blur: 10, growth: 1.38, ringBlur: 9, ringOpacity: 0.55 },
@@ -522,6 +511,7 @@ const conditionsChunkEls = CONDITIONS_VARIANCE_CHUNKS.map((chunk, i) => {
 });
 
 const dataQuestionTextEl = document.getElementById("dataQuestionText");
+const dataQuestionWordEls = wrapWordsForColorSweep(dataQuestionTextEl);
 const impressumEl = document.getElementById("impressum");
 const progressBarEl = document.getElementById("progressBar");
 const progressBarFillEl = document.getElementById("progressBarFill");
@@ -529,39 +519,17 @@ const progressBarFillEl = document.getElementById("progressBarFill");
 const QUESTION_INDEX = SLIDES.findIndex((s) => s.text.lines[0] === "Wie viel Wasser verbraucht");
 const GATE_INDEX = QUESTION_INDEX + 2;
 
-// Nach den Ripples läuft dieser Abschnitt rein über echtes Scrollen (siehe
-// finishReveal) — die 4 leeren Puffer-Slides direkt nach GATE_INDEX in SLIDES
-// geben dafür den nötigen, konfliktfreien Scroll-Raum her. GAP ist überall
-// hier derselbe Abstand, damit sich jeder Text-zu-Text-Übergang gleich lang
-// anfühlt (nicht wie zuvor mit uneinheitlichen Abständen) — Ausnahme ist der
-// allererste Übergang: "...unterscheiden sich je nach Quelle." erscheint
-// direkt beim letzten Klick (VARIANCE_START == GATE_INDEX, kein Warten auf
-// Scroll), erst danach ist wieder alles rein scroll-gesteuert.
-const TEXT_GAP = 0.6;
+const TEXT_GAP = 1.0;
 const TEXT_HOLD = 0.8;
-// Toleranz gegen minimales, unabsichtliches Zurückscrollen (siehe Ticker weiter
-// unten) — ~0.15 Slide entspricht bei 900px Viewporthöhe rund 120px, deutlich
-// mehr als ein einzelner Trackpad-Nachlauf-Tick.
+
 const RESET_DEADZONE = 0.15;
 const VARIANCE_START = GATE_INDEX;
 const VARIANCE_END = VARIANCE_START + TEXT_HOLD;
 const CONDITIONS_TRIGGER_INDEX = VARIANCE_END + TEXT_GAP;
 
-// Nach dem letzten Bedingungen-Klick ("...und Auslastung.") läuft der Rest
-// wieder rein über echtes Scrollen, analog zu VARIANCE_* oben: der Satz
-// bleibt stehen, bis gescrollt wird (kein Timer), dann kommt "Wer stellt
-// diese Daten zur Verfügung?" (siehe finishConditions/Ticker unten).
-const CONDITIONS_VARIANCE_END = CONDITIONS_TRIGGER_INDEX + TEXT_HOLD;
-const DATA_QUESTION_START = CONDITIONS_VARIANCE_END + TEXT_GAP;
+const DATA_QUESTION_START = CONDITIONS_TRIGGER_INDEX;
 const DATA_QUESTION_END = DATA_QUESTION_START + TEXT_HOLD;
 
-// Texte überlagern sich nie: der alte ist immer erst ganz weg, bevor der
-// nächste zu erscheinen beginnt. Radius ist deshalb standardmässig auf die
-// Hälfte der Lücke zwischen zwei Texten begrenzt (POINT_FADE_RADIUS bei den
-// Punkt-Texten unten, halber Slide-Abstand bei den TEXT_SEGMENTS weiter
-// unten) — beide treffen sich exakt in der Mitte bei Opacity 0. Ease-out beim
-// Erscheinen (schnell rein, sanft ankommen), ease-in beim Verschwinden
-// (bleibt zunächst stehen, verschwindet dann zügig) statt linear.
 const EASE_APPEAR = gsap.parseEase("power2.out");
 const EASE_LEAVE = gsap.parseEase("power2.in");
 const POINT_FADE_RADIUS = TEXT_GAP / 2;
@@ -583,45 +551,39 @@ let questionHidden = false;
 
 QUESTION_SEGMENT.fadeRange = [QUESTION_SEGMENT.startIndex + 1, QUESTION_SEGMENT.startIndex + 2];
 
+const QUESTION_REPRISE_SEGMENT = TEXT_SEGMENTS.find(
+  (seg) => seg.lines && seg.lines[0] === "Wie viel Wasser verbraucht" && seg !== QUESTION_SEGMENT
+);
+if (QUESTION_REPRISE_SEGMENT) {
+  QUESTION_REPRISE_SEGMENT.el.classList.remove("slide-text--plain-color");
+  QUESTION_REPRISE_SEGMENT.colorWordEls = null;
+}
+
 const DATA_SEGMENT = TEXT_SEGMENTS.find((seg) => seg.tokens === DATA_TOKENS);
 DATA_SEGMENT.fadeRange = [DATA_SEGMENT.startIndex + 1, DATA_SEGMENT.startIndex + 2];
 
 const FINAL_SEGMENT = TEXT_SEGMENTS.find((seg) => seg.lines && seg.lines[0] === "Ungewissheit");
-// Position kommt jetzt einheitlich aus TEXT_SEGMENTS.forEach (vertikal
-// zentriert wie title-screen) — slide-text--final liefert nur noch die
-// grössere, zentrierte Typografie fürs Schlusswort.
 if (FINAL_SEGMENT) FINAL_SEGMENT.el.classList.add("slide-text--final");
 let finalFadeArmed = false;
 
-// "Die Antwort besteht aus Widersprüchen, Unsicherheiten und Lücken." spannt 5
-// Slides mit identischem Text — der Punkt/die Ripples verändern sich darunter
-// rein scroll-gesteuert (kein Klick nötig), analog zu den DATA_TOKENS-Slides.
 const CONTRADICTIONS_SEGMENT = TEXT_SEGMENTS.find(
   (seg) => seg.lines && seg.lines[0] === "Die Antwort besteht aus Widersprüchen,"
 );
 
-// Jedes Wort blendet einzeln beim Scrollen ein (statt der ganze Satz auf
-// einmal) — synchronisiert mit den Ripple-Phasen im Ticker unten. Bleibt,
-// einmal erschienen, stehen (kein Zurück-Ausblenden wie bei KI_QUESTION_TOKENS).
 const CONTRADICTIONS_WORDS = ["Die", "Antwort", "besteht", "aus", "Widersprüchen,", "Unsicherheiten", "und", "Lücken."];
 const CONTRADICTIONS_LINE_BREAK_AFTER = "Widersprüchen,";
 CONTRADICTIONS_SEGMENT.el.textContent = "";
+CONTRADICTIONS_SEGMENT.colorWordEls = null;
 const contradictionWordSpans = CONTRADICTIONS_WORDS.map((word, i) => {
   if (i > 0) CONTRADICTIONS_SEGMENT.el.append(" ");
   const span = document.createElement("span");
   span.textContent = word;
-  gsap.set(span, { opacity: 0 });
+  gsap.set(span, { opacity: 0, color: TEXT_DIM_COLOR });
   CONTRADICTIONS_SEGMENT.el.appendChild(span);
   if (word === CONTRADICTIONS_LINE_BREAK_AFTER) CONTRADICTIONS_SEGMENT.el.appendChild(document.createElement("br"));
   return span;
 });
 
-// 4 Ringe an den gleichen festen Positionen wie die Quellen-Ripples
-// (RIPPLE_RADIUS_FRACTIONS) — kein Wachsen nach aussen, jeder Ring "poppt"
-// direkt auf seine Zielgrösse. Rollierende Kaskade: ein neuer Ring erscheint
-// scharf, zwei Ringe später wird er unscharf (genau wenn wieder zwei Ringe
-// später ein neuer entsteht), und nochmal zwei Ringe später verschwindet er
-// (siehe RING_STAGGER/RING_BLUR_LAG/RING_FADE_LAG im Ticker).
 const contradictionWaveRings = [0, 1, 2, 3].map(() => {
   const ring = document.createElement("div");
   ring.className = "ripple-ring ripple-ring--light";
@@ -630,13 +592,10 @@ const contradictionWaveRings = [0, 1, 2, 3].map(() => {
   return ring;
 });
 
-
 const studyRevealEl = document.getElementById("studyReveal");
 const studyEls = WATER_STUDIES.map((study, i) => {
   const circle = document.createElement("div");
   circle.className = "study-circle";
-  // Ist eine Quelle belegt (Link vorhanden), öffnet ein Klick auf den bereits
-  // enthüllten Punkt die Studie statt den nächsten Ripple auszulösen.
   circle.addEventListener("click", () => {
     if (study.link) {
       window.open(study.link, "_blank", "noopener");
@@ -650,18 +609,19 @@ const studyEls = WATER_STUDIES.map((study, i) => {
   labelEl.append(`Quelle ${i + 1}: ${study.name}`, document.createElement("br"), study.display);
   if (study.link) {
     labelEl.append(document.createElement("br"), "Studie ansehen ↗");
-    // Das Label ist viel grösser als der eigentliche (winzige) Punkt darunter —
-    // beim Hover direkt anklickbar, damit man die Quelle nicht exakt treffen muss.
     labelEl.classList.add("study-name--linked");
     labelEl.addEventListener("click", () => window.open(study.link, "_blank", "noopener"));
   }
   studyRevealEl.append(circle, labelEl);
+  const labelHalfW = labelEl.offsetWidth / 2;
 
-  circle.addEventListener("mouseenter", () => gsap.set(labelEl, { opacity: 1 }));
-  circle.addEventListener("mouseleave", () => gsap.set(labelEl, { opacity: 0 }));
+  if (SUPPORTS_HOVER) {
+    circle.addEventListener("mouseenter", () => gsap.set(labelEl, { opacity: 1 }));
+    circle.addEventListener("mouseleave", () => gsap.set(labelEl, { opacity: 0 }));
+  }
 
   gsap.set([circle, labelEl], { opacity: 0 });
-  return { circle, labelEl };
+  return { circle, labelEl, labelHalfW };
 });
 
 const ringEls = [];
@@ -697,17 +657,8 @@ function applyStudyCircle(el, geom) {
 let revealedCount = 0;
 let gateArmed = false;
 let gateDone = false;
-// Wahr, während p aktiv auf gateHoldIndex festgehalten wird (Klick-Strecken).
-// Dazwischen (z.B. nach den Ripples, vor den Bedingungen) ist es false und
-// echtes Scrollen bewegt p wieder frei — wie in den ersten Szenen.
 let scrollFrozen = false;
-let scrollLocked = false;
 let hintTimer = null;
-// Ohne diese Sperre würde "...unterscheiden sich je nach Quelle." schon
-// während des ganz normalen Hochscrollens zur Frage "Wie viel Wasser..."
-// anfangen einzublenden (VARIANCE_START == GATE_INDEX, Fade-Radius reicht in
-// die Frage hinein) — erst wenn die Ripples tatsächlich fertig durchgeklickt
-// sind, darf es zählen.
 let varianceReady = false;
 
 let heroScale = 1;
@@ -720,29 +671,10 @@ let gateHoldIndex = null;
 let conditionsGateArmed = false;
 let conditionsArmed = false;
 let conditionsStage = 0;
-// Ohne diese Sperre würde "Wer stellt diese Daten zur Verfügung?" schon
-// während des Hochscrollens zur Bedingungen-Frage anfangen einzublenden,
-// bevor die Bedingungen-Klicks je gemacht wurden (gleiches Muster wie
-// varianceReady oben).
-let conditionsVarianceReady = false;
-// Sobald "Wer stellt diese Daten zur Verfügung?" per Scroll fertig eingeblendet
-// ist, friert der Scroll erneut ein und wartet auf einen Klick — danach läuft
-// der Übergang zu DATA_SEGMENT automatisch (siehe armDataQuestionClick/
-// onDataQuestionAdvance/creepToDataText unten), nicht per weiterem Scrollen.
+let awaitingDataQuestionStart = false;
+let dataQuestionReady = false;
 let dataQuestionArmed = false;
 let dataQuestionDismissed = false;
-
-// Während der Klick-Strecken (Quellen → Bedingungen → Daten-Frage) bleibt p
-// auf gateHoldIndex eingefroren, damit sich Szene/Kreis nicht bewegen — echtes
-// Scrollen ist in dieser Zeit ohnehin gesperrt (siehe lockScroll). Die Bar
-// zeigte hier früher einen künstlichen "Klick-Fortschritt", der beim Auftauen
-// immer wieder sichtbar zurücksprang, weil er nie exakt mit dem realen p
-// übereinstimmte. Einfacher und ohne jeden Sprung: die Bar bewegt sich während
-// des Einfrierens schlicht nicht (bleibt exakt auf gateHoldIndex stehen, siehe
-// barP im Ticker) und blendet stattdessen kurz aus — man kann in dieser Zeit
-// ja sowieso nicht scrollen. Die automatische Kriech-Animation danach
-// (creepToDataText) bewegt gateHoldIndex selbst weiter, die Bar folgt dem also
-// weiterhin sichtbar, nur eben ohne separaten Proxy.
 
 const HINT_DELAY_MS = 3000;
 const SECOND_GATE_HINT_DELAY_MS = 1000;
@@ -757,6 +689,10 @@ function scheduleHint(showImmediately, delayMs = HINT_DELAY_MS) {
 let scrollHintTimer = null;
 let scrollHintArmedAgain = false;
 let scrollHintTriggerP = null;
+let scrollHintInitialDelayDone = false;
+setTimeout(() => {
+  scrollHintInitialDelayDone = true;
+}, 2000);
 
 function scheduleScrollHint(showImmediately) {
   clearTimeout(scrollHintTimer);
@@ -764,15 +700,6 @@ function scheduleScrollHint(showImmediately) {
   scrollHintTimer = setTimeout(() => gsap.to(scrollHintEl, { opacity: 1, duration: 0.4 }), HINT_DELAY_MS);
 }
 
-// Erzwingt, dass der "scrollen"-Hinweis nie gleichzeitig mit dem "klicken"-
-// Hinweis sichtbar ist. Nötig an zwei Stellen: (1) sobald ein Klick-Gate
-// (wieder) einrastet — ohne das könnte ein von finishReveal/finishConditions/
-// releaseGate gerade erst scharf geschaltener "scrollen"-Hinweis genau in dem
-// Moment aufblenden, in dem eigentlich schon wieder geklickt werden soll; (2)
-// beim Zurücksetzen einer Klick-Strecke (resetRipples/resetConditions/
-// resetDataQuestion) — sonst bleibt scrollHintArmedAgain auf einen Trigger-
-// Punkt stehen, der hinter dem jetzt zurückgesetzten p liegt, und der Hinweis
-// taucht beim erneuten Vorwärtsscrollen zur falschen Zeit wieder auf.
 function hideScrollHint() {
   scrollHintArmedAgain = false;
   clearTimeout(scrollHintTimer);
@@ -780,10 +707,6 @@ function hideScrollHint() {
   gsap.to(scrollHintEl, { opacity: 0, duration: 0.25 });
 }
 
-// Während des Impressum-Warte-Fensters entscheidet die Scroll-/Tasten-Richtung:
-// vorwärts (oder Touch, ohne verlässliche Richtung) überspringt die Wartezeit
-// wie bisher, rückwärts bricht sie ab und schickt ein Stück zurück in die
-// Story (siehe cancelImpressumWait).
 function preventScroll(e) {
   e.preventDefault();
   if (!waitingForImpressum) return;
@@ -806,19 +729,9 @@ function armImpressum() {
   impressumArmed = true;
   lockScroll();
   waitingForImpressum = true;
-  // Kein "scrollen"-Hinweis hier — es gibt nichts mehr, wohin man scrollen
-  // könnte. Blendet nach kurzer Zeit von selbst ein (Scrollen funktioniert
-  // im Hintergrund weiterhin als stiller Shortcut, wird aber nicht beworben).
-  impressumRevealTimer = gsap.delayedCall(6, revealImpressum);
+  impressumRevealTimer = gsap.delayedCall(8, revealImpressum);
 }
 
-// Abbruch des Warte-Fensters durch Zurückscrollen/-tasten, bevor das Impressum
-// überhaupt erschienen ist — kein Reveal, stattdessen ein kleiner, bewusster
-// Schritt zurück (analog zum Snap in armGate/armConditionsGate), der p sicher
-// unter FINAL_SEGMENT.startIndex bringt. Ohne diesen Snap stünde der reale
-// Scroll noch exakt auf der Schwelle (er wurde ja die ganze Zeit per
-// preventDefault blockiert) und armImpressum würde im nächsten Tick sofort
-// wieder auslösen.
 function cancelImpressumWait() {
   if (!waitingForImpressum) return;
   waitingForImpressum = false;
@@ -843,32 +756,21 @@ function revealImpressum() {
 
   finalFadeArmed = true;
 
-  // Als eine Timeline statt einzelner delayedCalls, damit rückwärts scrollen
-  // (siehe resetImpressum/Ticker) den gesamten Schluss-Ablauf mit einem
-  // einzigen .kill() sauber stoppen kann, egal in welcher Phase er gerade ist.
   endingTimeline = gsap.timeline();
   endingTimeline.to(circleEl, { opacity: 0, duration: 1, ease: "power2.out" }, 0);
   endingTimeline.to(circle2El, { opacity: 0, duration: 1, ease: "power2.out" }, 0);
   if (FINAL_SEGMENT) endingTimeline.to(FINAL_SEGMENT.el, { opacity: 0, duration: 1, ease: "power2.out" }, 0);
 
-  endingTimeline.call(() => impressumEl.setAttribute("aria-hidden", "false"), null, 1);
-  endingTimeline.to(impressumEl, { opacity: 1, duration: 1, ease: "power2.out" }, 1);
+  endingTimeline.call(() => impressumEl.setAttribute("aria-hidden", "false"), null, 2);
+  endingTimeline.to(impressumEl, { opacity: 1, duration: 1, ease: "power2.out" }, 2);
 
-  // "neustart" an der scrollen-Position, aber erst 1–2s NACH dem Impressum
-  // (impressum startet bei 1s, braucht 1s zum Einblenden — daher 3.5s Gesamt-
-  // verzögerung ab hier), nicht gleichzeitig mit dem Rest des Schluss-Fadeouts.
   endingTimeline.call(() => {
     restartHintEl.setAttribute("aria-hidden", "false");
     restartHintEl.style.pointerEvents = "auto";
-  }, null, 3.5);
-  endingTimeline.to(restartHintEl, { opacity: 1, duration: 1, ease: "power2.out" }, 3.5);
+  }, null, 4.5);
+  endingTimeline.to(restartHintEl, { opacity: 1, duration: 1, ease: "power2.out" }, 4.5);
 }
 
-// Rückwärts über das fertige Ende hinaus scrollen (Impressum/"neustart" schon
-// sichtbar) — setzt beides zurück und übergibt die Kontrolle über
-// circleEl/circle2El/FINAL_SEGMENT sofort wieder an den normalen, p-gesteuerten
-// Ticker-Durchlauf (kein manuelles Zurücksetzen ihrer Opacity nötig, siehe
-// Aufrufstelle im Ticker unten).
 function resetImpressum() {
   finalFadeArmed = false;
   impressumArmed = false;
@@ -890,14 +792,12 @@ restartHintEl.addEventListener("click", () => {
 });
 
 function lockScroll() {
-  scrollLocked = true;
   window.addEventListener("wheel", preventScroll, { passive: false });
   window.addEventListener("touchmove", preventScroll, { passive: false });
   window.addEventListener("keydown", preventScrollKeys);
 }
 
 function unlockScroll() {
-  scrollLocked = false;
   window.removeEventListener("wheel", preventScroll);
   window.removeEventListener("touchmove", preventScroll);
   window.removeEventListener("keydown", preventScrollKeys);
@@ -921,9 +821,6 @@ function armGate() {
   hintEverShown = true;
 }
 
-// Der endgültige Ausstieg aus der ganzen Klick-Strecke, am Ende von
-// creepToDataText — setzt den Kreis (Skalierung von den Bedingungen-Klicks)
-// zurück, bevor die DATA_SEGMENT-Slide-Geometrie selbst übernimmt.
 function releaseGate() {
   if (gateDone) return;
   gateDone = true;
@@ -936,9 +833,6 @@ function releaseGate() {
   scheduleScrollHint(true);
 }
 
-// Nach der letzten Quelle wartet "Quelle 4: ..." auf einen weiteren Klick,
-// bevor finishReveal es ausblendet und "Die Werte reichen von..." zeigt —
-// kein Automatismus, der Nutzer entscheidet den Moment (siehe onGateClick).
 let awaitingConclusionClick = false;
 
 function revealNextBatch() {
@@ -970,9 +864,6 @@ function finishReveal() {
   studiesDismissed = true;
   studyEls.forEach(({ labelEl }) => gsap.to(labelEl, { opacity: 0, duration: 0.4 }));
 
-  // "Quelle 4: ..." muss ganz weg sein, bevor "...unterscheiden sich je nach
-  // Quelle." erscheint (varianceReady lässt es sonst sofort auf Opacity 1
-  // springen, während Quelle 4 noch am Ausblenden ist — deshalb erst im onComplete).
   gsap.to(sourceRevealTextEl, {
     opacity: 0,
     duration: 0.4,
@@ -981,9 +872,6 @@ function finishReveal() {
     },
   });
 
-  // Ab hier wieder wie in den ersten Szenen: p wird nicht mehr festgehalten,
-  // "...unterscheiden sich je nach Quelle." blendet rein per echtem Scrollen
-  // ein/aus (siehe VARIANCE_* im Ticker), kein Klick, kein Timer.
   scrollFrozen = false;
   unlockScroll();
   scrollHintArmedAgain = true;
@@ -991,9 +879,8 @@ function finishReveal() {
   scheduleScrollHint(true);
 }
 
-// "Wovon hängt dieser Wert ab?" verschwindet erst on Klick, nicht von allein
-// nach einer festen Wartezeit (siehe circleEl-Klick-Listener unten).
 let awaitingConditionsStart = false;
+let conditionsSweepTl = null;
 
 function armConditionsGate() {
   conditionsGateArmed = true;
@@ -1005,26 +892,29 @@ function armConditionsGate() {
 }
 
 function armConditions() {
-  // Ripples bleiben stehen statt zu verschwinden — sie werden erst beim
-  // ersten Klick unscharf, mit etwas dickerer Kontur (siehe onConditionsClick).
-  // Klickbar bleiben sie aber nicht: der Kreis wächst über die Klick-Strecke
-  // hinweg auf über das 1.8-fache und würde die (fixen) Quellen-Punkte optisch
-  // überlagern — ein Klick dort öffnete sonst versehentlich den Quellen-Link
-  // in einem neuen Tab, statt die Bedingungen-Antwort fortzusetzen.
   studyEls.forEach(({ circle, labelEl }) => {
     circle.classList.remove("study-circle--hoverable");
     gsap.to(labelEl, { opacity: 0, duration: 0.3 });
   });
 
   hideScrollHint();
-  circleEl.classList.add("circle--clickable");
-  gsap.killTweensOf(circleEl, "scale");
-  gsap.to(circleEl, { scale: 1.035, duration: 0.9, ease: "sine.inOut", yoyo: true, repeat: -1, delay: 2 });
 
   gsap.to(conditionsTitleTextEl, { opacity: 1, duration: 0.5, delay: 0.4 });
-  clickHintEl.textContent = "Klicke den Kreis an";
-  scheduleHint(true, SECOND_GATE_HINT_DELAY_MS);
-  awaitingConditionsStart = true;
+
+  conditionsSweepTl = gsap.timeline();
+  conditionsSweepTl.fromTo(
+    conditionsTitleWordEls,
+    { color: TEXT_DIM_COLOR },
+    { color: "#000000", duration: 0.35, stagger: 0.12 },
+    0.9
+  );
+  conditionsSweepTl.call(() => {
+    circleEl.classList.add("circle--clickable");
+    gsap.to(circleEl, { scale: 1.035, duration: 0.9, ease: "sine.inOut", yoyo: true, repeat: -1, delay: 2 });
+    clickHintEl.textContent = "Klicke den Kreis an";
+    scheduleHint(true, SECOND_GATE_HINT_DELAY_MS);
+    awaitingConditionsStart = true;
+  });
 }
 
 function onConditionsClick() {
@@ -1057,43 +947,44 @@ function onConditionsClick() {
 circleEl.addEventListener("click", () => {
   if (awaitingConditionsStart) {
     awaitingConditionsStart = false;
-    gsap.to(conditionsTitleTextEl, { opacity: 0, duration: 0.5 });
+    gsap.set(conditionsTitleTextEl, { opacity: 0 });
     gsap.set(conditionsVarianceTextEl, { opacity: 1 });
     conditionsArmed = true;
-    // Derselbe Klick, der die Frage wegnimmt, löst auch gleich die erste
-    // Stufe aus ("Der Verbrauch schwankt" + erster Blur) — sonst stünde die
-    // Antwort einen Klick lang leer da.
     onConditionsClick();
     return;
   }
   if (conditionsArmed) onConditionsClick();
 });
 
-// Ab hier wieder wie in den ersten Szenen (analog zu finishReveal): p wird
-// nicht mehr festgehalten, "...und Auslastung." bleibt stehen, bis gescrollt
-// wird, dann kommt "Wer stellt diese Daten zur Verfügung?" — kein Klick,
-// kein Timer (siehe CONDITIONS_VARIANCE_END/DATA_QUESTION_* im Ticker). Der
-// Kreis bleibt bewusst unscharf/gross wie am Ende der Bedingungen-Interaktion
-// stehen — beide Szenen gehören visuell zusammen, kein Reset (siehe releaseGate).
 function finishConditions() {
-  conditionsVarianceReady = true;
-  scrollFrozen = false;
-  unlockScroll();
-  circleEl.classList.remove("circle--clickable");
+  clickHintEl.textContent = "Klicke den Kreis an";
+  scheduleHint(true, SECOND_GATE_HINT_DELAY_MS);
+  setTimeout(() => {
+    awaitingDataQuestionStart = true;
+  }, 0);
+}
+
+circleEl.addEventListener("click", () => {
+  if (!awaitingDataQuestionStart) return;
+  awaitingDataQuestionStart = false;
   clearTimeout(hintTimer);
   gsap.to(clickHintEl, { opacity: 0, duration: 0.3 });
+  circleEl.classList.remove("circle--clickable");
+  gsap.set(conditionsVarianceTextEl, { opacity: 0 });
+
+  dataQuestionReady = true;
+  scrollFrozen = false;
+  unlockScroll();
   scrollHintArmedAgain = true;
   scrollHintTriggerP = gateHoldIndex;
   scheduleScrollHint(true);
-}
+});
 
-// Sobald "Wer stellt diese Daten zur Verfügung?" per Scroll voll sichtbar ist,
-// friert der Scroll wieder ein und wartet auf einen Klick (siehe Ticker).
 function armDataQuestionClick() {
   dataQuestionArmed = true;
   scrollFrozen = true;
-  gateHoldIndex = DATA_QUESTION_START;
-  window.scrollTo(0, slidePx(DATA_QUESTION_START));
+  gateHoldIndex = DATA_QUESTION_END;
+  window.scrollTo(0, slidePx(DATA_QUESTION_END));
   lockScroll();
   hideScrollHint();
   circleEl.classList.add("circle--clickable");
@@ -1101,8 +992,6 @@ function armDataQuestionClick() {
   scheduleHint(true, SECOND_GATE_HINT_DELAY_MS);
 }
 
-// Der Klick blendet die Frage aus und stösst danach eine automatisch
-// ablaufende Animation an (creepToDataText) — kein weiteres Scrollen nötig.
 function onDataQuestionAdvance() {
   dataQuestionArmed = false;
   dataQuestionDismissed = true;
@@ -1117,8 +1006,6 @@ circleEl.addEventListener("click", () => {
   if (dataQuestionArmed) onDataQuestionAdvance();
 });
 
-// Der Punkt kriecht automatisch weiter zu DATA_SEGMENT — die Skalierung von
-// den Bedingungen-Klicks löst sich dabei sanft auf, kein hartes Zurücksetzen.
 function creepToDataText() {
   gsap.killTweensOf(circleEl, "scale");
   gsap.to(circleEl, { scale: 1, x: 0, y: 0, duration: 1.2, ease: "power2.inOut" });
@@ -1134,19 +1021,12 @@ function creepToDataText() {
   });
 }
 
-// "Quelle N: ..." ist Inhalt (Text), kein Hinweis — eigenes Element, oben
-// links wie die übrigen Erzähltexte, nicht der zentrale Klick-Hinweis. Wird
-// sowohl beim Klick (neu enthüllte Quelle) als auch beim Hover über eine
-// bereits enthüllte Quelle benutzt (siehe mouseenter/mouseleave weiter unten).
 function renderSourceReveal(index) {
   const study = WATER_STUDIES[index];
   sourceRevealTextEl.textContent = "";
   sourceRevealTextEl.append(`Quelle ${index + 1}: ${study.name}`, document.createElement("br"), study.display);
-  // "pro Quelle"-Legende sitzt direkt unter dem Quellen-Text statt oben rechts
-  // — Höhe des Texts variiert (1–2 Zeilen je nach Quelle/Viewport), daher hier
-  // dynamisch neu vermessen statt eines fixen CSS-Werts.
   const rect = sourceRevealTextEl.getBoundingClientRect();
-  gsap.set(rippleLegendEl, { left: 48, top: rect.bottom + 20, right: "auto", xPercent: 0, yPercent: 0 });
+  gsap.set(rippleLegendEl, { left: edgePad(), top: rect.bottom + 20, right: "auto", xPercent: 0, yPercent: 0 });
 }
 
 function onGateClick() {
@@ -1156,18 +1036,14 @@ function onGateClick() {
     return;
   }
   if (revealedCount >= WATER_STUDIES.length) return;
-  // Erst beim ersten Klick verschwindet die Frage — dafür kommt die
-  // "pro Quelle"-Erklärung.
   if (revealedCount === 0 && !questionHidden) {
     questionHidden = true;
-    gsap.to(QUESTION_SEGMENT.el, { opacity: 0, duration: 0.4 });
-    gsap.to(rippleLegendEl, { opacity: 1, duration: 0.5, delay: 0.3 });
+    gsap.set(QUESTION_SEGMENT.el, { opacity: 0 });
+    gsap.set(rippleLegendEl, { opacity: 1 });
   }
   renderSourceReveal(revealedCount);
-  // Sofort sichtbar, gleichzeitig mit dem Ripple — nicht erst kurz ausblenden
-  // und verzögert wieder einblenden (das wirkte wie ein Verschwinden).
   gsap.killTweensOf(sourceRevealTextEl, "opacity");
-  gsap.to(sourceRevealTextEl, { opacity: 1, duration: 0.25 });
+  gsap.set(sourceRevealTextEl, { opacity: 1 });
   revealNextBatch();
 }
 
@@ -1198,11 +1074,6 @@ function applyCircle(el, geom) {
   });
 }
 
-// Rückwärts-Scrollen macht alles rückgängig, was per Klick hinzugekommen ist
-// — sobald man über eine bereits erledigte Klick-Strecke zurück scrollt (nur
-// möglich, wenn diese gerade nicht eingefroren/gesperrt ist), wird ihr
-// Zustand komplett zurückgesetzt und die Strecke kann beim nächsten Vorwärts-
-// Scrollen erneut durchgeklickt werden (siehe die drei Aufrufe im Ticker unten).
 function resetRipples() {
   const wasRevealedCount = revealedCount;
   gateArmed = false;
@@ -1211,6 +1082,7 @@ function resetRipples() {
   studiesDismissed = false;
   awaitingConclusionClick = false;
   varianceReady = false;
+  varianceWordEls.forEach((span) => (span.style.color = TEXT_DIM_COLOR));
   clearTimeout(hintTimer);
   gsap.killTweensOf(clickHintEl);
   gsap.to(clickHintEl, { opacity: 0, duration: 0.3 });
@@ -1223,8 +1095,6 @@ function resetRipples() {
   gsap.to(circleEl, { scale: 1, duration: 0.4, ease: "power2.inOut" });
   hideScrollHint();
 
-  // Rückwärts-Reveal statt Hart-Cut: die zuletzt enthüllte Quelle verschwindet
-  // zuerst, dann rückwärts der Reihe nach — spiegelt den Vorwärts-Klickablauf.
   const REVERSE_STAGGER = 0.12;
   const ringsToRemove = ringEls.splice(0);
   for (let i = 0; i < wasRevealedCount; i += 1) {
@@ -1239,8 +1109,6 @@ function resetRipples() {
       gsap.to(ring, { opacity: 0, scale: 0.5, duration: 0.3, delay, ease: "power2.in", onComplete: () => ring.remove() });
     }
   }
-  // Falls je mehr Ringe im DOM als revealedCount hergibt (sollte nicht
-  // vorkommen) — sicherheitshalber ohne Animation aufräumen.
   ringsToRemove.slice(wasRevealedCount).forEach((ring) => ring.remove());
 }
 
@@ -1250,7 +1118,13 @@ function resetConditions() {
   conditionsArmed = false;
   awaitingConditionsStart = false;
   conditionsStage = 0;
-  conditionsVarianceReady = false;
+  if (conditionsSweepTl) {
+    conditionsSweepTl.kill();
+    conditionsSweepTl = null;
+  }
+  conditionsTitleWordEls.forEach((span) => (span.style.color = TEXT_DIM_COLOR));
+  awaitingDataQuestionStart = false;
+  dataQuestionReady = false;
   clearTimeout(hintTimer);
   gsap.killTweensOf(clickHintEl);
   gsap.to(clickHintEl, { opacity: 0, duration: 0.3 });
@@ -1258,9 +1132,10 @@ function resetConditions() {
   gsap.to(conditionsTitleTextEl, { opacity: 0, duration: 0.3 });
   gsap.killTweensOf(conditionsVarianceTextEl);
   gsap.to(conditionsVarianceTextEl, { opacity: 0, duration: 0.3 });
+  gsap.killTweensOf(dataQuestionTextEl);
+  gsap.to(dataQuestionTextEl, { opacity: 0, duration: 0.3 });
+  dataQuestionWordEls.forEach((span) => (span.style.color = TEXT_DIM_COLOR));
 
-  // Rückwärts-Reveal statt Hart-Cut: die zuletzt hinzugekommene Zeile
-  // verschwindet zuerst, dann rückwärts der Reihe nach.
   const REVERSE_STAGGER = 0.15;
   gsap.killTweensOf(conditionsChunkEls);
   for (let i = 0; i < wasStage; i += 1) {
@@ -1271,8 +1146,6 @@ function resetConditions() {
   gsap.killTweensOf(circleEl, "scale");
   gsap.to(circleEl, { scale: 1, duration: 0.5, ease: "power2.inOut" });
 
-  // studyExtraBlur ist eine reine JS-Zahl (kein GSAP-Target) — per Proxy-Objekt
-  // sanft auf 0 zurückgeführt statt hart gesetzt, analog zu onConditionsClick.
   const blurProxy = { v: studyExtraBlur };
   gsap.to(blurProxy, { v: 0, duration: 0.5, ease: "power2.inOut", onUpdate: () => (studyExtraBlur = blurProxy.v) });
 
@@ -1284,12 +1157,15 @@ function resetConditions() {
 function resetDataQuestion() {
   dataQuestionArmed = false;
   dataQuestionDismissed = false;
+  dataQuestionReady = false;
+  awaitingDataQuestionStart = false;
   gateDone = false;
   clearTimeout(hintTimer);
   gsap.killTweensOf(clickHintEl);
   gsap.to(clickHintEl, { opacity: 0, duration: 0.3 });
   gsap.killTweensOf(dataQuestionTextEl);
   gsap.to(dataQuestionTextEl, { opacity: 0, duration: 0.3 });
+  dataQuestionWordEls.forEach((span) => (span.style.color = TEXT_DIM_COLOR));
   circleEl.classList.remove("circle--clickable");
   gsap.killTweensOf(circleEl, "scale");
   gsap.to(circleEl, { scale: 1, duration: 0.4, ease: "power2.inOut" });
@@ -1307,11 +1183,6 @@ const sequenceTrigger = ScrollTrigger.create({
 gsap.ticker.add(() => {
   let p = gsap.utils.clamp(0, N - 1, sequenceTrigger.progress * (N - 1));
 
-  // Analog zu den drei Klick-Strecken unten: Zurückscrollen über das fertige
-  // Ende hinaus (Impressum/"neustart" schon sichtbar) setzt es zurück und lässt
-  // den Rest der Funktion (unten) den Ticker-Durchlauf ab hier ganz normal
-  // übernehmen. Bevor genug zurückgescrollt wurde, bleibt der frühe Ausstieg
-  // wie bisher bestehen — die Schluss-Timeline behält die Kontrolle.
   if (finalFadeArmed) {
     if (FINAL_SEGMENT && p < FINAL_SEGMENT.startIndex - RESET_DEADZONE) {
       resetImpressum();
@@ -1320,13 +1191,6 @@ gsap.ticker.add(() => {
     }
   }
 
-  // Rückwärts über eine bereits erledigte Klick-Strecke scrollen setzt sie
-  // zurück (siehe resetRipples/resetConditions/resetDataQuestion oben) — nur
-  // relevant, wenn gerade nicht eingefroren (währenddessen ist Scrollen ohnehin
-  // gesperrt, siehe lockScroll). RESET_DEADZONE verhindert, dass minimales,
-  // unabsichtliches Zurückscrollen (z.B. Trackpad-Nachlauf direkt nach einem
-  // Klick, ein paar Pixel) sofort eine ganze fertige Strecke zurücksetzt — erst
-  // ein wirklich spürbares Zurückscrollen zählt als Absicht.
   if (!scrollFrozen) {
     if (gateArmed && p < GATE_INDEX - RESET_DEADZONE) resetRipples();
     if (conditionsGateArmed && p < CONDITIONS_TRIGGER_INDEX - RESET_DEADZONE) resetConditions();
@@ -1335,7 +1199,7 @@ gsap.ticker.add(() => {
 
   if (!gateArmed && p >= GATE_INDEX) armGate();
   if (!conditionsGateArmed && p >= CONDITIONS_TRIGGER_INDEX) armConditionsGate();
-  if (conditionsVarianceReady && !dataQuestionArmed && !dataQuestionDismissed && p >= DATA_QUESTION_START) {
+  if (dataQuestionReady && !dataQuestionArmed && !dataQuestionDismissed && p >= DATA_QUESTION_END) {
     armDataQuestionClick();
   }
   if (scrollFrozen) {
@@ -1343,12 +1207,6 @@ gsap.ticker.add(() => {
     window.scrollTo(0, slidePx(gateHoldIndex));
   }
 
-  // Früher erst bei p >= N-1 (ganz am Ende des Scroll-Bereichs) — wirkte so,
-  // als wäre man nach "Ungewissheit" schon fertig, weil man noch weiterscrollen
-  // musste, ohne dass sichtbar etwas Neues passierte. Jetzt läuft der Abschluss
-  // automatisch als Animation, sobald "Ungewissheit" fertig eingeblendet ist
-  // (siehe armImpressum/revealImpressum: Ungewissheit blendet aus, dann
-  // Impressum, dann "neustart" — kein weiteres Scrollen nötig).
   if (!impressumArmed && FINAL_SEGMENT && p >= FINAL_SEGMENT.startIndex) armImpressum();
 
   const i = Math.min(N - 2, Math.floor(p));
@@ -1359,56 +1217,36 @@ gsap.ticker.add(() => {
   invertStageEl.style.backgroundColor = lerpColor(a.bg, b.bg, t);
 
   const bgLuminance = lerp(avgLuminance(a.bg), avgLuminance(b.bg), t);
-  // Während einer Klick-Strecke (scrollFrozen) blendet die Bar kurz aus, statt
-  // einen künstlichen "Klick-Fortschritt" vorzutäuschen — man kann in dieser
-  // Zeit ohnehin nicht scrollen (siehe lockScroll). .progress-bar hat eine
-  // CSS-transition auf opacity, darum ist auch dieser gsap.set-Sprung sanft.
   gsap.set(progressBarEl, { opacity: scrollFrozen ? 0 : gsap.utils.clamp(0, 1, bgLuminance / 30) });
-  // Bar bleibt exakt auf gateHoldIndex stehen, solange scrollFrozen aktiv ist
-  // (bewegt sich also nicht, siehe Wunsch unten) — sobald aufgetaut wird, ist
-  // das reale p an genau dieser Stelle, kein Sprung nötig. Während der
-  // automatischen Kriech-Animation (creepToDataText) bewegt sich gateHoldIndex
-  // selbst weiter, die Bar folgt dem transparent mit.
   const barP = scrollFrozen ? gateHoldIndex : p;
   gsap.set(progressBarFillEl, { scaleY: barP / (N - 1) });
 
-  // "...unterscheiden sich je nach Quelle.": reine Scroll-Opacity wie die
-  // übrigen Erzähltexte, kein Klick, kein Timer. varianceReady-Sperre:
-  // VARIANCE_START == GATE_INDEX, ihr Fade-Radius reicht sonst schon in die
-  // "Wie viel Wasser..."-Frage hinein, bevor die Ripples je durchgeklickt
-  // wurden (siehe finishReveal).
+  const textFullColorHere = lerpColor("#000000", "#f0f0ee", 1 - gsap.utils.clamp(0, 1, bgLuminance / 30));
+  function sweepWords(wordEls, startIndex, endIndex) {
+    const sweepT = gsap.utils.clamp(0, 1, (p - startIndex) / (endIndex - startIndex));
+    const n = wordEls.length;
+    wordEls.forEach((span, i) => {
+      const wordT = gsap.utils.clamp(0, 1, (sweepT - i / n) / (1 / n));
+      span.style.color = lerpColor(TEXT_DIM_COLOR, textFullColorHere, wordT);
+    });
+  }
+
   varianceTextEl.style.opacity = varianceReady
     ? pointSegmentOpacity(p, VARIANCE_START, VARIANCE_END, POINT_FADE_RADIUS, POINT_FADE_RADIUS)
     : 0;
+  if (varianceReady) sweepWords(varianceWordEls, VARIANCE_START, VARIANCE_END);
 
-  // "...und Auslastung." / "Wer stellt diese Daten zur Verfügung?": gleiches
-  // Muster wie oben — conditionsVarianceReady-Sperre verhindert ein zu frühes
-  // Einblenden, während man erst noch auf CONDITIONS_TRIGGER_INDEX zuscrollt.
-  if (conditionsVarianceReady) {
-    conditionsVarianceTextEl.style.opacity = pointSegmentOpacity(
+  if (dataQuestionReady && !dataQuestionDismissed) {
+    dataQuestionTextEl.style.opacity = pointSegmentOpacity(
       p,
-      CONDITIONS_TRIGGER_INDEX,
-      CONDITIONS_VARIANCE_END,
+      DATA_QUESTION_START,
+      DATA_QUESTION_END,
       POINT_FADE_RADIUS,
       POINT_FADE_RADIUS
     );
-    // dataQuestionDismissed-Sperre: sobald der Klick den manuellen Fade-out
-    // startet (siehe onDataQuestionAdvance), würde diese Formel ihn sofort
-    // wieder auf Opacity 1 zurücksetzen (p steht dabei noch auf DATA_QUESTION_START).
-    if (!dataQuestionDismissed) {
-      dataQuestionTextEl.style.opacity = pointSegmentOpacity(
-        p,
-        DATA_QUESTION_START,
-        DATA_QUESTION_END,
-        POINT_FADE_RADIUS,
-        POINT_FADE_RADIUS
-      );
-    }
+    sweepWords(dataQuestionWordEls, DATA_QUESTION_START, DATA_QUESTION_END);
   }
 
-  // On pure-black scenes (negative text: black bg, white text), shrink the
-  // circle and text ~5% — scales continuously with how "black" the current
-  // background is, using the same luminance signal as the progress bar fade.
   const blackness = 1 - gsap.utils.clamp(0, 1, bgLuminance / 30);
   const negativeScale = 1 - blackness * NEGATIVE_SHRINK;
 
@@ -1417,26 +1255,22 @@ gsap.ticker.add(() => {
   circleGeom.rPx *= negativeScale;
   circle2Geom.rPx *= negativeScale;
 
-  // Rhythmus: erst ist es kurz leer (Titel ist weg, Punkt noch nicht da),
-  // dann erscheint der Punkt und wächst langsam weiter — die Zielgrösse
-  // erreicht er erst genau bei "Wie viel Wasser verbraucht", nicht schon vorher.
   const CIRCLE_INTRO_START = TITLE_FADE_RANGE + 0.05;
   if (p < QUESTION_INDEX) {
     const introT = gsap.utils.clamp(0, 1, (p - CIRCLE_INTRO_START) / (QUESTION_INDEX - CIRCLE_INTRO_START));
     circleGeom.rPx = introT * INTRO_GROWN_R * Math.min(window.innerWidth, window.innerHeight) * negativeScale;
   }
 
-  // studyExtraBlur ist ausserhalb des Bedingungen/Daten-Fensters ohnehin 0,
-  // daher unabhängig vom Gate-Status anwendbar.
   applyCircle(circleEl, { ...circleGeom, blur: circleGeom.blur + studyExtraBlur });
   applyCircle(circle2El, circle2Geom);
 
   WATER_STUDIES.forEach((study, idx) => {
     const geom = circleGeometry(study, study, 0);
     const entry = studyEls[idx];
-    const { circle, labelEl } = entry;
+    const { circle, labelEl, labelHalfW } = entry;
     applyStudyCircle(circle, { ...geom, blur: geom.blur + studyExtraBlur });
-    gsap.set(labelEl, { left: geom.cxPx, top: geom.cyPx - geom.rPx - 8, xPercent: -50, yPercent: -100 });
+    const labelCx = gsap.utils.clamp(labelHalfW + 4, window.innerWidth - labelHalfW - 4, geom.cxPx);
+    gsap.set(labelEl, { left: labelCx, top: geom.cyPx - geom.rPx - 8, xPercent: -50, yPercent: -100 });
     if (studiesDismissed) {
       gsap.set([circle, labelEl], { opacity: 0 });
     }
@@ -1446,11 +1280,6 @@ gsap.ticker.add(() => {
     const minSidePx = Math.min(window.innerWidth, window.innerHeight);
     const phase = p - CONTRADICTIONS_SEGMENT.startIndex;
 
-    // "Die Antwort besteht aus" blendet als ein Block zusammen ein (Schritt 0),
-    // die restlichen 4 Wörter je einzeln (Schritte 1–4) — 5 Schritte statt 8,
-    // gleichmässig verteilt über die ersten 3 der 5 Slides (phase 0–2). Die
-    // letzten beiden Slides (phase 2–4) sind eine ruhige Pause, in der der
-    // fertige Satz einfach stehen bleibt.
     const WORD_TO_STEP = [0, 0, 0, 0, 1, 2, 3, 4];
     const STEP_SPAN = 2 / 5;
     const WORD_FADE_WIDTH = 0.3;
@@ -1459,14 +1288,14 @@ gsap.ticker.add(() => {
       gsap.set(span, { opacity: EASE_APPEAR(wordT) });
     });
 
-    // Rollierende Ring-Kaskade statt "nach aussen wachsend": 4 Ringe an den
-    // gleichen festen Positionen wie die Quellen-Ripples (RIPPLE_RADIUS_FRACTIONS),
-    // jeder poppt direkt auf seine Zielgrösse (kein Wachsen nach aussen). Ring i
-    // erscheint scharf, wird unscharf genau dann, wenn Ring i+2 erscheint, und
-    // verschwindet genau dann, wenn Ring i+2 seinerseits unscharf wird. Ring0
-    // startet bewusst erst bei phase 0.4, synchron mit dem Wort "Widersprüchen,"
-    // (WORD_TO_STEP[4] * STEP_SPAN) — der erste Ripple soll mit dem Wort
-    // erscheinen, nicht schon während "Die Antwort besteht aus" davor.
+    const colorSweepStart = 4 * STEP_SPAN + WORD_FADE_WIDTH;
+    const colorSweepEnd = colorSweepStart + 1;
+    const colorSweepT = EASE_APPEAR(gsap.utils.clamp(0, 1, (phase - colorSweepStart) / (colorSweepEnd - colorSweepStart)));
+    const contradictionColor = lerpColor(TEXT_DIM_COLOR, textFullColorHere, colorSweepT);
+    contradictionWordSpans.forEach((span) => {
+      span.style.color = contradictionColor;
+    });
+
     const RING_STAGGER = 0.2;
     const RING_START_OFFSET = 2 * RING_STAGGER;
     const RING_POP_DURATION = 0.08;
@@ -1495,15 +1324,13 @@ gsap.ticker.add(() => {
 
   }
 
-  // Alle Texte links, vertikal zentriert wie der Titel (.title-screen) —
-  // Ausnahmen sind nur die Nav und die Quellen-Hover-Labels an den Ripples,
-  // die an ihrer jeweiligen Position bleiben müssen.
-  const sceneTextLeftPx = 48;
+  const sceneTextLeftPx = edgePad();
+  const sceneTextTopPx = 0.05 * window.innerHeight;
 
-  gsap.set(varianceTextEl, { left: sceneTextLeftPx, top: "50%", xPercent: 0, yPercent: -50 });
-  gsap.set(conditionsTitleTextEl, { left: sceneTextLeftPx, top: "50%", xPercent: 0, yPercent: -50 });
-  gsap.set(conditionsVarianceTextEl, { left: sceneTextLeftPx, top: "50%", xPercent: 0, yPercent: -50 });
-  gsap.set(dataQuestionTextEl, { left: sceneTextLeftPx, top: "50%", xPercent: 0, yPercent: -50 });
+  gsap.set(varianceTextEl, { left: sceneTextLeftPx, top: sceneTextTopPx, xPercent: 0, yPercent: 0 });
+  gsap.set(conditionsTitleTextEl, { left: sceneTextLeftPx, top: sceneTextTopPx, xPercent: 0, yPercent: 0 });
+  gsap.set(conditionsVarianceTextEl, { left: sceneTextLeftPx, top: sceneTextTopPx, xPercent: 0, yPercent: 0 });
+  gsap.set(dataQuestionTextEl, { left: sceneTextLeftPx, top: sceneTextTopPx, xPercent: 0, yPercent: 0 });
 
   TEXT_SEGMENTS.forEach((seg) => {
 
@@ -1516,12 +1343,16 @@ gsap.ticker.add(() => {
     const dist = p > seg.endIndex ? p - seg.endIndex : 0;
     const exitBlur = seg.exitBlur && dist > 0 ? Math.min(dist / fadeOutRadius, 1) * EXIT_BLUR_PX : 0;
 
+    const riseY = seg === FINAL_SEGMENT || p > seg.startIndex ? 0 : (1 - opacity) * TEXT_RISE_PX;
+    const isFinal = seg === FINAL_SEGMENT;
+
     gsap.set(seg.el, {
       opacity,
       left: sceneTextLeftPx,
-      top: "50%",
+      top: isFinal ? "50%" : sceneTextTopPx,
       xPercent: 0,
-      yPercent: -50,
+      yPercent: isFinal ? -50 : 0,
+      y: riseY,
       filter: `blur(${exitBlur}px)`,
     });
 
@@ -1529,6 +1360,17 @@ gsap.ticker.add(() => {
       const [fadeStart, fadeEnd] = seg.fadeRange;
       const wordFadeT = gsap.utils.clamp(0, 1, (p - fadeStart) / (fadeEnd - fadeStart));
       seg.wordEls.fade.forEach((span) => gsap.set(span, { opacity: 1 - wordFadeT }));
+    }
+
+    if (seg.colorWordEls && !isFinal) {
+      const sweepEnd = seg.fadeRange ? seg.fadeRange[0] : seg.endIndex;
+      const textFullColor = lerpColor("#000000", "#f0f0ee", blackness);
+      const sweepT = gsap.utils.clamp(0, 1, (p - seg.startIndex) / (sweepEnd - seg.startIndex || fadeOutRadius));
+      const n = seg.colorWordEls.length;
+      seg.colorWordEls.forEach((span, i) => {
+        const wordT = gsap.utils.clamp(0, 1, (sweepT - i / n) / (1 / n));
+        span.style.color = lerpColor(TEXT_DIM_COLOR, textFullColor, wordT);
+      });
     }
   });
 
@@ -1539,7 +1381,7 @@ gsap.ticker.add(() => {
   siteHeaderEl.style.opacity = gsap.utils.clamp(0, 1, 1 - p / HEADER_FADE_RANGE);
 
   if (!scrollHintArmedAgain) {
-    scrollHintEl.style.opacity = p > SCROLL_HINT_HIDE_P ? 0 : 1;
+    scrollHintEl.style.opacity = scrollHintInitialDelayDone && p <= SCROLL_HINT_HIDE_P ? 1 : 0;
   } else if (p > scrollHintTriggerP + SCROLL_HINT_HIDE_P) {
     clearTimeout(scrollHintTimer);
     gsap.to(scrollHintEl, { opacity: 0, duration: 0.3 });

@@ -1,7 +1,15 @@
 @font-face {
   font-family: "Helvetica Now Display";
   src: url("fonts/HelveticaNowDisplay-Regular.woff2") format("woff2");
-  font-weight: 400 700;
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Helvetica Now Display";
+  src: url("fonts/HelveticaNowText-Bold.woff") format("woff");
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -28,14 +36,16 @@
   box-sizing: border-box;
 }
 
+:root {
+  --edge-pad: clamp(20px, 6vw, 48px);
+}
+
 .site-header {
   display: flex;
   align-items: center;
-  gap: 48px;
-  padding: 8px 48px;
+  gap: clamp(16px, 6vw, 48px);
+  padding: 8px var(--edge-pad);
   min-height: 48px;
-  /* fixed statt sticky: die Seite hat keinen echten Dokumenten-Scroll, alles
-     hier ist virtuelles Scroll-Overlay wie der Rest der Bühne. */
   position: fixed;
   top: 0;
   left: 0;
@@ -61,8 +71,7 @@
 }
 
 .header__back,
-.header__next,
-.header__breadcrumb {
+.header__next {
   color: rgba(26, 26, 26, 0.35);
   font-size: 0.6rem;
   font-family: "FreigeistNeue", sans-serif;
@@ -73,11 +82,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.header__breadcrumb {
-  display: block;
-  text-align: left;
 }
 
 .header__next {
@@ -91,8 +95,6 @@
 html, body {
   overflow-x: hidden;
   font-size: clamp(1rem, 1.5vw, 1.5rem);
-  /* Eigener Progress-Bar rechts ersetzt den nativen Scrollbalken, damit nicht
-     zwei Fortschrittsanzeigen nebeneinander auf der rechten Seite stehen. */
   scrollbar-width: none;
 }
 
@@ -106,6 +108,7 @@ body {
 
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .invert-stage {
@@ -123,10 +126,10 @@ body {
 
 .title-screen {
   position: fixed;
-  left: 48px;
+  left: var(--edge-pad);
   top: 50%;
   transform: translateY(-50%);
-  width: 90vw;
+  width: calc(100vw - 2 * var(--edge-pad));
   max-width: 720px;
   text-align: left;
   color: #f0f0ee;
@@ -228,8 +231,6 @@ body {
   width: 10px;
   z-index: 20;
   pointer-events: none;
-  /* Blendet sanft aus/ein, statt hart zu springen, wenn scrollFrozen die
-     Opacity umschaltet (siehe Ticker in script.js). */
   transition: opacity 0.3s ease;
 }
 
@@ -243,12 +244,13 @@ body {
 
 .click-hint {
   position: fixed;
-  right: 48px;
-  bottom: 48px;
+  left: 50%;
+  bottom: calc(48px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
   font-family: "FreigeistNeue", sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.2em;
-  text-align: right;
+  text-align: left;
   line-height: 1.6;
   color: #999999;
   mix-blend-mode: difference;
@@ -265,10 +267,7 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  /* width tracks font-size 1:1 (em) so the authored line breaks never
-     rewrap: at any viewport, box width = 21.7 * font-size, which is wide
-     enough for the longest authored line at that font-size. */
-  width: 21.7em;
+  width: min(21.7em, calc(100vw - 2 * var(--edge-pad)));
   color: #f0f0ee;
   mix-blend-mode: difference;
   font-weight: 700;
@@ -281,16 +280,24 @@ body {
   will-change: transform, opacity;
 }
 
+.slide-text--plain-color {
+  mix-blend-mode: normal;
+  color: #000;
+}
+
+@media (max-width: 600px) {
+  .slide-text {
+    font-size: clamp(22px, 6.5vw, 32px);
+  }
+}
+
 .source-reveal-text {
-  left: 48px;
+  left: var(--edge-pad);
   top: 5vh;
 }
 
-/* Schlusstext "Ungewissheit" ist wie am Anfang (.title-screen/.title-heading)
-   linksbündig, vertikal zentriert — Positionierung selbst kommt aus dem
-   Ticker (isFinal). */
 .slide-text--final {
-  width: 90vw;
+  width: calc(100vw - 2 * var(--edge-pad));
   max-width: 720px;
   text-align: left;
   text-transform: uppercase;
@@ -298,18 +305,11 @@ body {
   line-height: 1.1;
 }
 
-@media (max-width: 600px) {
-  .slide-text {
-    text-align: center;
-    font-size: clamp(12px, 4.15vw, 22px);
-  }
-}
-
 .impressum {
   position: fixed;
-  left: 48px;
-  bottom: 6vh;
-  width: 90vw;
+  left: var(--edge-pad);
+  bottom: max(6vh, env(safe-area-inset-bottom));
+  width: calc(100vw - 2 * var(--edge-pad));
   max-width: 380px;
   color: #f0f0ee;
   mix-blend-mode: difference;
@@ -332,8 +332,9 @@ body {
 
 .scroll-hint {
   position: fixed;
-  right: 48px;
-  bottom: 48px;
+  left: 50%;
+  bottom: calc(48px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -381,37 +382,9 @@ body {
   animation: scroll-arrow-bounce 1.6s ease-in-out infinite;
 }
 
-.desktop-only-notice {
-  display: none;
-}
-
-@media (max-width: 1000px) {
-  body > *:not(.desktop-only-notice) {
-    display: none !important;
-  }
-
-  body {
-    cursor: auto;
-  }
-
-  .desktop-only-notice {
-    display: flex;
-    position: fixed;
-    inset: 0;
-    align-items: center;
-    justify-content: center;
-    padding: 2em;
-    text-align: center;
-    background: #f0f0ee;
-    color: #000000;
-    z-index: 9999;
-  }
-
-  .desktop-only-notice p {
-    max-width: 24em;
-    font-size: 1.1rem;
-    line-height: 1.5;
-  }
+.circle--clickable,
+.study-circle--hoverable {
+  touch-action: manipulation;
 }
 
 @keyframes scroll-arrow-bounce {
