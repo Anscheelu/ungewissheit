@@ -1,0 +1,420 @@
+@font-face {
+  font-family: "Helvetica Now Display";
+  src: url("fonts/HelveticaNowDisplay-Regular.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "FreigeistNeue";
+  src: url("fonts/RBFreigeistNeue-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "FreigeistNeue";
+  src: url("fonts/RBFreigeistNeue-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  padding: 8px 48px;
+  min-height: 48px;
+  /* fixed statt sticky: die Seite hat keinen echten Dokumenten-Scroll, alles
+     hier ist virtuelles Scroll-Overlay wie der Rest der Bühne. */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #f0f0ee;
+  margin-bottom: 2px;
+  box-shadow: 0 60px 0 0 #f0f0ee;
+  pointer-events: none;
+}
+
+.site-header__main {
+  flex: 1 0 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.site-header__aside {
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+.header__back,
+.header__next,
+.header__breadcrumb {
+  color: rgba(26, 26, 26, 0.35);
+  font-size: 0.6rem;
+  font-family: "FreigeistNeue", sans-serif;
+  line-height: 1;
+}
+
+.header__back {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header__breadcrumb {
+  display: block;
+  text-align: left;
+}
+
+.header__next {
+  display: block;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html, body {
+  overflow-x: hidden;
+  font-size: clamp(1rem, 1.5vw, 1.5rem);
+  /* Eigener Progress-Bar rechts ersetzt den nativen Scrollbalken, damit nicht
+     zwei Fortschrittsanzeigen nebeneinander auf der rechten Seite stehen. */
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  background: #f0f0ee;
+  font-family: "Helvetica Now Display", "Helvetica Neue", Arial, sans-serif;
+
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.invert-stage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #f0f0ee;
+}
+
+.stage-trigger {
+  height: 100vh;
+}
+
+.title-screen {
+  position: fixed;
+  left: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 90vw;
+  max-width: 720px;
+  text-align: left;
+  color: #f0f0ee;
+  mix-blend-mode: difference;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.title-heading {
+  font-weight: 700;
+  font-size: clamp(32px, 7vw, 64px);
+  line-height: 1.1;
+}
+
+.circle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform, width, height, filter, opacity, background-color;
+}
+
+.circle--secondary {
+  z-index: 1;
+}
+
+.study-circle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform, width, height, filter, opacity;
+}
+
+.study-circle--hoverable {
+  pointer-events: auto;
+}
+
+.ripple-ring {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 12px solid #000000;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ripple-ring--light {
+  border-color: #f0f0ee;
+}
+
+.study-name {
+  position: fixed;
+  top: 0;
+  left: 0;
+  color: #f0f0ee;
+  mix-blend-mode: difference;
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 480px) {
+  .study-name {
+    font-size: 10px;
+  }
+}
+
+.circle--clickable {
+  pointer-events: auto;
+}
+
+.study-name--linked {
+  pointer-events: auto;
+}
+
+.progress-bar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 10px;
+  z-index: 20;
+  pointer-events: none;
+  /* Blendet sanft aus/ein, statt hart zu springen, wenn scrollFrozen die
+     Opacity umschaltet (siehe Ticker in script.js). */
+  transition: opacity 0.3s ease;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: #000000;
+  transform: scaleY(0);
+  transform-origin: top center;
+}
+
+.click-hint {
+  position: fixed;
+  right: 48px;
+  bottom: 48px;
+  font-family: "FreigeistNeue", sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-align: right;
+  line-height: 1.6;
+  color: #999999;
+  mix-blend-mode: difference;
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scene-texts {
+  pointer-events: none;
+}
+
+.slide-text {
+  position: fixed;
+  top: 0;
+  left: 0;
+  /* width tracks font-size 1:1 (em) so the authored line breaks never
+     rewrap: at any viewport, box width = 21.7 * font-size, which is wide
+     enough for the longest authored line at that font-size. */
+  width: 21.7em;
+  color: #f0f0ee;
+  mix-blend-mode: difference;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: left;
+  font-size: clamp(40px, 1.844vw, 64px);
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.source-reveal-text {
+  left: 48px;
+  top: 5vh;
+}
+
+/* Schlusstext "Ungewissheit" ist wie am Anfang (.title-screen/.title-heading)
+   linksbündig, vertikal zentriert — Positionierung selbst kommt aus dem
+   Ticker (isFinal). */
+.slide-text--final {
+  width: 90vw;
+  max-width: 720px;
+  text-align: left;
+  text-transform: uppercase;
+  font-size: clamp(32px, 7vw, 64px);
+  line-height: 1.1;
+}
+
+@media (max-width: 600px) {
+  .slide-text {
+    text-align: center;
+    font-size: clamp(12px, 4.15vw, 22px);
+  }
+}
+
+.impressum {
+  position: fixed;
+  left: 48px;
+  bottom: 6vh;
+  width: 90vw;
+  max-width: 380px;
+  color: #f0f0ee;
+  mix-blend-mode: difference;
+  text-align: left;
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.impressum p {
+  font-family: "FreigeistNeue", sans-serif;
+  font-size: 0.6rem;
+  line-height: clamp(1.35em, 2.5vw, 1.45em);
+  margin-bottom: 1em;
+}
+
+.impressum-copyright {
+  opacity: 0.7;
+}
+
+.scroll-hint {
+  position: fixed;
+  right: 48px;
+  bottom: 48px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4em;
+  font-family: "FreigeistNeue", sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: #999999;
+  mix-blend-mode: difference;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.restart-hint {
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ripple-legend {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  font-size: 0.6rem;
+  letter-spacing: 0.03em;
+  color: #f0f0ee;
+  mix-blend-mode: difference;
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ripple-legend-ring {
+  font-size: 1.3em;
+  line-height: 1;
+  flex: none;
+}
+
+.scroll-arrow {
+  order: -1;
+  font-size: 0.45rem;
+  letter-spacing: 0;
+  animation: scroll-arrow-bounce 1.6s ease-in-out infinite;
+}
+
+.desktop-only-notice {
+  display: none;
+}
+
+@media (max-width: 1000px) {
+  body > *:not(.desktop-only-notice) {
+    display: none !important;
+  }
+
+  body {
+    cursor: auto;
+  }
+
+  .desktop-only-notice {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 2em;
+    text-align: center;
+    background: #f0f0ee;
+    color: #000000;
+    z-index: 9999;
+  }
+
+  .desktop-only-notice p {
+    max-width: 24em;
+    font-size: 1.1rem;
+    line-height: 1.5;
+  }
+}
+
+@keyframes scroll-arrow-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+}

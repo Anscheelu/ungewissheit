@@ -1,11 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ungewissheit</title>
+
+<script>history.scrollRestoration = "manual";</script>
+
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Hello world!</h1>
+
+  <header class="site-header" id="siteHeader" aria-hidden="true">
+    <div class="site-header__main">
+      <span class="header__back">Ungewissheit</span>
+    </div>
+    <div class="site-header__aside">
+      <span class="header__next">Bachelor Thesis von Angela Ammann</span>
+    </div>
+  </header>
+
+  <div class="desktop-only-notice" id="desktopOnlyNotice">
+    <p>Diese Webseite ist nur für die Desktop-Ansicht verfügbar.</p>
+  </div>
+
+  <div class="stage-trigger" id="stageTrigger" aria-hidden="true"></div>
+
+  <div class="invert-stage" id="invertStage">
+    <div class="title-screen" id="titleScreen" aria-hidden="true">
+      <h1 class="title-heading">UNGEWISSHEIT</h1>
+    </div>
+
+    <div class="circle" id="circle" aria-hidden="true"></div>
+    <div class="circle circle--secondary" id="circle2" aria-hidden="true"></div>
+
+    <div class="study-reveal" id="studyReveal" aria-hidden="true"></div>
+
+    <div class="scene-texts" id="sceneTexts" aria-hidden="true"></div>
+
+    <p class="slide-text" id="varianceText" aria-hidden="true">Die Werte unterscheiden<br>sich je nach Quelle.</p>
+
+    <p class="slide-text" id="conditionsTitleText" aria-hidden="true">Wovon hängt dieser Wert ab?</p>
+    <p class="slide-text" id="conditionsVarianceText" aria-hidden="true"></p>
+    <p class="slide-text" id="dataQuestionText" aria-hidden="true">Wer stellt diese Daten<br>zur Verfügung?</p>
+
+    <div class="impressum" id="impressum" aria-hidden="true">
+      <p class="impressum-title">Impressum</p>
+      <p>Bachelor Thesis 2026</p>
+      <p>Konzept und Gestaltung:<br>Angela Ammann</p>
+      <p>Mentorierende:<br>Susanne Käser<br>Ted Davis</p>
+      <p>Schriften:<br>Neue Freigeist, Helvetica Now</p>
+      <p>FHNW, Hochschule für Gestaltung und Kunst Basel<br>Institut Digitale Kommunikationsumgebungen<br>Bachelor Visuelle Kommunikation und digitale Räume</p>
+      <p>Vertiefung: Digitale Räume</p>
+      <p class="impressum-copyright">© 2026 Angela Ammann / FHNW HGK Basel.<br>Alle Rechte vorbehalten.</p>
+    </div>
+
+    <p class="scroll-hint" id="scrollHint">scrollen<span class="scroll-arrow">&#8595;</span></p>
+    <p class="scroll-hint restart-hint" id="restartHint" aria-hidden="true">neustart</p>
+    <p class="click-hint" id="clickHint" aria-hidden="true">klicken</p>
+    <p class="slide-text source-reveal-text" id="sourceRevealText" aria-hidden="true"></p>
+
+    <div class="ripple-legend" id="rippleLegend" aria-hidden="true">
+      <span class="ripple-legend-ring">○</span>
+      <span>pro Quelle</span>
+    </div>
+  </div>
+
+  <div class="progress-bar" id="progressBar" aria-hidden="true">
+    <div class="progress-bar-fill" id="progressBarFill"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
