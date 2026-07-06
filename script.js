@@ -523,6 +523,7 @@ const GATE_INDEX = QUESTION_INDEX + 2;
 
 const TEXT_GAP = 1.0;
 const TEXT_HOLD = 0.8;
+const TEXT_APPEAR_DURATION = 0.3;
 
 const RESET_DEADZONE = 0.15;
 const VARIANCE_START = GATE_INDEX;
@@ -686,8 +687,12 @@ let hintEverShown = false;
 
 function scheduleHint(showImmediately, delayMs = HINT_DELAY_MS) {
   clearTimeout(hintTimer);
+  clickHintEl.classList.toggle("hint-blink", showImmediately);
   gsap.to(clickHintEl, { opacity: showImmediately ? 1 : 0, duration: showImmediately ? 0.4 : 0.2 });
-  hintTimer = setTimeout(() => gsap.to(clickHintEl, { opacity: 1, duration: 0.4 }), delayMs);
+  hintTimer = setTimeout(() => {
+    clickHintEl.classList.add("hint-blink");
+    gsap.to(clickHintEl, { opacity: 1, duration: 0.4 });
+  }, delayMs);
 }
 
 let scrollHintTimer = null;
@@ -700,13 +705,18 @@ setTimeout(() => {
 
 function scheduleScrollHint(showImmediately) {
   clearTimeout(scrollHintTimer);
+  scrollHintEl.classList.toggle("hint-blink", showImmediately);
   gsap.to(scrollHintEl, { opacity: showImmediately ? 1 : 0, duration: showImmediately ? 0.4 : 0.2 });
-  scrollHintTimer = setTimeout(() => gsap.to(scrollHintEl, { opacity: 1, duration: 0.4 }), HINT_DELAY_MS);
+  scrollHintTimer = setTimeout(() => {
+    scrollHintEl.classList.add("hint-blink");
+    gsap.to(scrollHintEl, { opacity: 1, duration: 0.4 });
+  }, HINT_DELAY_MS);
 }
 
 function hideScrollHint() {
   scrollHintArmedAgain = false;
   clearTimeout(scrollHintTimer);
+  scrollHintEl.classList.remove("hint-blink");
   gsap.killTweensOf(scrollHintEl);
   gsap.to(scrollHintEl, { opacity: 0, duration: 0.25 });
 }
@@ -756,6 +766,7 @@ function revealImpressum() {
   unlockScroll();
   scrollHintArmedAgain = false;
   clearTimeout(scrollHintTimer);
+  scrollHintEl.classList.remove("hint-blink");
   gsap.to(scrollHintEl, { opacity: 0, duration: 0.3 });
 
   finalFadeArmed = true;
@@ -853,6 +864,7 @@ function revealNextBatch() {
 
 function finishReveal() {
   clearTimeout(hintTimer);
+  clickHintEl.classList.remove("hint-blink");
   gsap.to(clickHintEl, { opacity: 0, duration: 0.3 });
   gsap.killTweensOf(clickHintEl, "scale");
   gsap.to(clickHintEl, { scale: 1, duration: 0.3 });
@@ -972,6 +984,7 @@ circleEl.addEventListener("click", () => {
   if (!awaitingDataQuestionStart) return;
   awaitingDataQuestionStart = false;
   clearTimeout(hintTimer);
+  clickHintEl.classList.remove("hint-blink");
   gsap.to(clickHintEl, { opacity: 0, duration: 0.3 });
   circleEl.classList.remove("circle--clickable");
   gsap.set(conditionsVarianceTextEl, { opacity: 0 });
@@ -1000,6 +1013,7 @@ function onDataQuestionAdvance() {
   dataQuestionArmed = false;
   dataQuestionDismissed = true;
   clearTimeout(hintTimer);
+  clickHintEl.classList.remove("hint-blink");
   gsap.to(clickHintEl, { opacity: 0, duration: 0.3 });
   circleEl.classList.remove("circle--clickable");
   gsap.to(dataQuestionTextEl, { opacity: 0, duration: 0.5 });
@@ -1088,6 +1102,7 @@ function resetRipples() {
   varianceReady = false;
   varianceWordEls.forEach((span) => (span.style.color = TEXT_DIM_COLOR));
   clearTimeout(hintTimer);
+  clickHintEl.classList.remove("hint-blink");
   gsap.killTweensOf(clickHintEl);
   gsap.to(clickHintEl, { opacity: 0, duration: 0.3 });
   gsap.killTweensOf(sourceRevealTextEl);
@@ -1130,6 +1145,7 @@ function resetConditions() {
   awaitingDataQuestionStart = false;
   dataQuestionReady = false;
   clearTimeout(hintTimer);
+  clickHintEl.classList.remove("hint-blink");
   gsap.killTweensOf(clickHintEl);
   gsap.to(clickHintEl, { opacity: 0, duration: 0.3 });
   gsap.killTweensOf(conditionsTitleTextEl);
@@ -1165,6 +1181,7 @@ function resetDataQuestion() {
   awaitingDataQuestionStart = false;
   gateDone = false;
   clearTimeout(hintTimer);
+  clickHintEl.classList.remove("hint-blink");
   gsap.killTweensOf(clickHintEl);
   gsap.to(clickHintEl, { opacity: 0, duration: 0.3 });
   gsap.killTweensOf(dataQuestionTextEl);
@@ -1235,20 +1252,22 @@ gsap.ticker.add(() => {
     });
   }
 
+  function appearThenSweepOpacity(startIndex, endIndex, fadeOutRadius) {
+    if (p < startIndex) return 0;
+    const appearEnd = startIndex + TEXT_APPEAR_DURATION;
+    if (p < appearEnd) return EASE_APPEAR(gsap.utils.clamp(0, 1, (p - startIndex) / TEXT_APPEAR_DURATION));
+    if (p <= endIndex) return 1;
+    return EASE_LEAVE(gsap.utils.clamp(0, 1, 1 - (p - endIndex) / fadeOutRadius));
+  }
+
   varianceTextEl.style.opacity = varianceReady
-    ? pointSegmentOpacity(p, VARIANCE_START, VARIANCE_END, POINT_FADE_RADIUS, POINT_FADE_RADIUS)
+    ? appearThenSweepOpacity(VARIANCE_START, VARIANCE_END, POINT_FADE_RADIUS)
     : 0;
-  if (varianceReady) sweepWords(varianceWordEls, VARIANCE_START, VARIANCE_END);
+  if (varianceReady) sweepWords(varianceWordEls, VARIANCE_START + TEXT_APPEAR_DURATION, VARIANCE_END);
 
   if (dataQuestionReady && !dataQuestionDismissed) {
-    dataQuestionTextEl.style.opacity = pointSegmentOpacity(
-      p,
-      DATA_QUESTION_START,
-      DATA_QUESTION_END,
-      POINT_FADE_RADIUS,
-      POINT_FADE_RADIUS
-    );
-    sweepWords(dataQuestionWordEls, DATA_QUESTION_START, DATA_QUESTION_END);
+    dataQuestionTextEl.style.opacity = appearThenSweepOpacity(DATA_QUESTION_START, DATA_QUESTION_END, POINT_FADE_RADIUS);
+    sweepWords(dataQuestionWordEls, DATA_QUESTION_START + TEXT_APPEAR_DURATION, DATA_QUESTION_END);
   }
 
   const blackness = 1 - gsap.utils.clamp(0, 1, bgLuminance / 30);
@@ -1385,9 +1404,12 @@ gsap.ticker.add(() => {
   siteHeaderEl.style.opacity = gsap.utils.clamp(0, 1, 1 - p / HEADER_FADE_RANGE);
 
   if (!scrollHintArmedAgain) {
-    scrollHintEl.style.opacity = scrollHintInitialDelayDone && p <= SCROLL_HINT_HIDE_P ? 1 : 0;
+    const showScrollHint = scrollHintInitialDelayDone && p <= SCROLL_HINT_HIDE_P;
+    scrollHintEl.classList.toggle("hint-blink", showScrollHint);
+    scrollHintEl.style.opacity = showScrollHint ? 1 : 0;
   } else if (p > scrollHintTriggerP + SCROLL_HINT_HIDE_P) {
     clearTimeout(scrollHintTimer);
+    scrollHintEl.classList.remove("hint-blink");
     gsap.to(scrollHintEl, { opacity: 0, duration: 0.3 });
     scrollHintArmedAgain = false;
   }

@@ -373,7 +373,10 @@ body {
   order: -1;
   font-size: 0.45rem;
   letter-spacing: 0;
-  animation: scroll-arrow-bounce 1.6s ease-in-out infinite;
+}
+
+.hint-blink {
+  animation: hint-blink 1.2s ease-in-out infinite;
 }
 
 .circle--clickable,
@@ -381,9 +384,9 @@ body {
   touch-action: manipulation;
 }
 
-@keyframes scroll-arrow-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(2px); }
+@keyframes hint-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .header__next-break {
